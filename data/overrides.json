@@ -5,11 +5,26 @@
       "deadline": "2025-12-31",
       "deadline_display": "December 31, 2025",
       "note": "CBS site blocks scrapers - checked manually 2026-01-03"
+    },
+    "fa819b8411ad": {
+      "deadline": "2026-02-13",
+      "deadline_display": "February 13, 2026",
+      "note": "Japanese embassy site blocks scrapers - checked manually 2026-01-03"
+    },
+    "6130b4d165ff": {
+      "deadline": "2025-01-01",
+      "deadline_display": "Closed",
+      "note": "Manually marked as closed"
     }
   },
   "blocked_sites": [
     {
       "domain": "business.columbia.edu",
+      "reason": "403 Forbidden - blocks automated requests",
+      "last_checked": "2026-01-03"
+    },
+    {
+      "domain": "ny.us.emb-japan.go.jp",
       "reason": "403 Forbidden - blocks automated requests",
       "last_checked": "2026-01-03"
     }

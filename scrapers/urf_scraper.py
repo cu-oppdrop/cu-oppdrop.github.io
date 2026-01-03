@@ -489,13 +489,43 @@ def scrape_detail_page(url: str, cookies: dict) -> dict | None:
                 break
 
     deadline_iso, deadline_display = None, None
-    deadline_field = soup.find(class_=re.compile(r"field-name-field-application-deadline|field.*deadline", re.I))
-    if deadline_field:
-        field_text = deadline_field.get_text(strip=True)
-        deadline_iso, deadline_display = parse_deadline(field_text)
 
+    # Try multiple selectors for deadline field
+    deadline_selectors = [
+        re.compile(r"field-name-field-application-deadline", re.I),
+        re.compile(r"field.*deadline", re.I),
+        re.compile(r"field.*due-date", re.I),
+        re.compile(r"field.*closes?", re.I),
+    ]
+
+    for selector in deadline_selectors:
+        deadline_field = soup.find(class_=selector)
+        if deadline_field:
+            field_text = deadline_field.get_text(strip=True)
+            deadline_iso, deadline_display = parse_deadline(field_text)
+            if deadline_display:
+                print(f"      Found deadline in field: {deadline_display}")
+                break
+
+    # Also look for labeled deadline sections in the page
+    if not deadline_display:
+        # Look for dt/dd pairs or label patterns
+        for dt in soup.find_all(["dt", "strong", "b", "label"]):
+            dt_text = dt.get_text(strip=True).lower()
+            if any(kw in dt_text for kw in ["deadline", "due date", "applications due", "apply by"]):
+                # Get the next sibling or parent's next element
+                dd = dt.find_next_sibling(["dd", "span", "div", "p"])
+                if dd:
+                    deadline_iso, deadline_display = parse_deadline(dd.get_text(strip=True))
+                    if deadline_display:
+                        print(f"      Found deadline in labeled section: {deadline_display}")
+                        break
+
+    # Fall back to parsing from full text
     if not deadline_display:
         deadline_iso, deadline_display = parse_deadline(full_text)
+        if deadline_display:
+            print(f"      Found deadline in body text: {deadline_display}")
 
     amounts = re.findall(r'\$[\d,]+', full_text)
     funding = list(dict.fromkeys(amounts))[:3]
@@ -520,7 +550,7 @@ def scrape_detail_page(url: str, cookies: dict) -> dict | None:
 
     # If no deadline from URF and we have an external URL, try scraping it
     if not deadline_display and external_url:
-        print(f"      Following external: {external_url[:60]}...")
+        print(f"      No URF deadline, following external: {external_url[:60]}...")
         external_data = scrape_external_page(external_url)
         if external_data:
             if external_data.get("deadline_display"):

@@ -104,8 +104,11 @@ def generate_tags(text: str) -> dict:
 
     return {k: v for k, v in tags.items() if v}
 
-def deadline(text: str) -> str | None:
-    """Extract deadline from text. Handles formats like 'March 6th, 2025' or 'March 6, 2025'."""
+def parse_deadline(text: str) -> tuple[str | None, str | None]:
+    """
+    Extract deadline from text. Returns (iso_date, display_date) tuple.
+    Handles formats like 'March 6th, 2025' or 'March 6, 2025'.
+    """
     patterns = [
         r'(?:deadline)[:\s]+([A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})',
         r'(?:due)[:\s]+([A-Za-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})',
@@ -115,8 +118,23 @@ def deadline(text: str) -> str | None:
     for p in patterns:
         match = re.search(p, text, re.IGNORECASE)
         if match:
-            return match.group(1).strip()
-    return None
+            display = match.group(1).strip()
+            # Convert to ISO format
+            iso = None
+            try:
+                # Remove ordinal suffixes
+                clean = re.sub(r'(\d+)(?:st|nd|rd|th)', r'\1', display)
+                for fmt in ['%B %d, %Y', '%B %d %Y', '%b %d, %Y', '%b %d %Y']:
+                    try:
+                        dt = datetime.strptime(clean, fmt)
+                        iso = dt.strftime('%Y-%m-%d')
+                        break
+                    except ValueError:
+                        continue
+            except Exception:
+                pass
+            return iso, display
+    return None, None
 
 def normalize_url(href: str) -> str:
     if not href:
@@ -158,14 +176,15 @@ def scrape_detail_page(url: str) -> dict | None:
     full_text = "\n".join(p.get_text(strip=True) for p in paragraphs)
 
     # Try to find deadline
-    dl = deadline(full_text)
+    deadline_iso, deadline_display = parse_deadline(full_text)
 
     # Extract funding amounts
     funding = extract_funding(full_text)
 
     return {
         "full_text": full_text,
-        "deadline": dl,
+        "deadline": deadline_iso,
+        "deadline_display": deadline_display,
         "funding": funding,
     }
 
@@ -204,7 +223,8 @@ def scrape() -> list[dict]:
 
         # Follow link to get full details (only for internal MEI links)
         description = brief_desc
-        dl = None
+        deadline_iso = None
+        deadline_display = None
         funding = []
 
         if href.startswith("/") and "mei.columbia.edu" not in href:
@@ -215,9 +235,14 @@ def scrape() -> list[dict]:
                 if details["full_text"]:
                     description = details["full_text"][:800]
                 if details["deadline"]:
-                    dl = details["deadline"]
+                    deadline_iso = details["deadline"]
+                    deadline_display = details.get("deadline_display")
                 if details["funding"]:
                     funding = details["funding"]
+
+        # Fall back to parsing deadline from description if not found
+        if not deadline_iso:
+            deadline_iso, deadline_display = parse_deadline(description)
 
         tags = generate_tags(name + " " + description)
         if funding:
@@ -231,7 +256,8 @@ def scrape() -> list[dict]:
             "source": "Middle East Institute",
             "source_url": url,
             "tags": tags,
-            "deadline": dl if dl else deadline(description),
+            "deadline": deadline_iso,
+            "deadline_display": deadline_display,
             "scraped_at": datetime.now(timezone.utc).isoformat(),
         }
         opportunities.append(opp)
@@ -289,6 +315,8 @@ def scrape_external_fellowships_page() -> list[dict]:
         else:
             source = current_section
 
+        deadline_iso, deadline_display = parse_deadline(description)
+
         opp = {
             "id": generate_id(name, source),
             "name": name,
@@ -297,7 +325,8 @@ def scrape_external_fellowships_page() -> list[dict]:
             "source": source,
             "source_url": url,
             "tags": generate_tags(name + " " + description),
-            "deadline": deadline(description),
+            "deadline": deadline_iso,
+            "deadline_display": deadline_display,
             "scraped_at": datetime.now(timezone.utc).isoformat(),
         }
         opportunities.append(opp)
