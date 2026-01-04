@@ -23,7 +23,7 @@ def main():
 
     # Load opportunities
     if not OPPORTUNITIES_FILE.exists():
-        print("No opportunities.json found")
+        print("No opportunities.json found - skipping")
         return
 
     with open(OPPORTUNITIES_FILE) as f:
@@ -39,6 +39,10 @@ def main():
 
     overrides = data.get("overrides", {})
     blocked_sites = data.get("blocked_sites", [])
+
+    if not overrides and not blocked_sites:
+        print("No overrides or blocked sites defined - skipping")
+        return
 
     if not overrides:
         print("No overrides defined")
