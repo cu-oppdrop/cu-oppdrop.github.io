@@ -11394,5 +11394,33 @@
     "deadline": null,
     "deadline_display": null,
     "scraped_at": "2026-02-07T06:38:12.886206+00:00"
+  },
+  {
+    "id": "35ca319e7f15",
+    "name": "Cyber NYC REU",
+    "description": "The Cyber NYC Research Experience for Undergraduates (REU) is a well-supported, fully funded summer program focused on advancing cybersecurity through faculty-mentored research at Columbia University (including Barnard College), New York University, Cornell Tech, and the City University of New York (CUNY).This unique cross-institutional initiative provides students from the participating institutions with the opportunity to spend 10 weeks conducting hands-on research at one of the participating campuses. Each student is matched with a faculty mentor working on cutting-edge topics in cybersecurity, privacy, cryptography, or related fields. In addition to research, the program includes professional development workshops, technical seminars, industry site visits, and social events designed to",
+    "url": "https://www.engineering.columbia.edu/research-innovation/student-postdoc-research-opportunities/cyber-nyc-reu-program",
+    "source": "Manual",
+    "source_url": "https://www.engineering.columbia.edu/research-innovation/student-postdoc-research-opportunities/cyber-nyc-reu-program",
+    "tags": {
+      "level": [
+        "undergraduate"
+      ],
+      "type": [
+        "research",
+        "internship"
+      ],
+      "citizenship": [
+        "us_citizen",
+        "permanent_resident",
+        "international"
+      ],
+      "funding": [
+        "$10000"
+      ]
+    },
+    "deadline": "2026-03-25",
+    "deadline_display": "March 25, 2026",
+    "scraped_at": "2026-02-09T02:43:40.390000+00:00"
   }
 ]
